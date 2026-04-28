@@ -9,7 +9,9 @@ template <typename T> void printArray(const T A[], const size_t &n) {
   std::println();
 }
 
-template <typename T> class PriorityQueue {
+template <typename T,
+          std::enable_if_t<std::is_arithmetic<T>::value, bool> = true>
+class PriorityQueue {
   std::vector<T> A;
 
   void heapify_enqueue(const size_t &index) { // used in heapify enqueue.
@@ -17,57 +19,71 @@ template <typename T> class PriorityQueue {
       return;
 
     // parent index
-
+    size_t parent = (index - 1) / 2;
     // swap if parent is smaller
-    if (A[index] < A[index - 1]) {
-      std::swap(A[index], A[index - 1]);
-    } else {
-      return;
+    if (this->A[parent] < this->A[index]) {
+      std::swap(this->A[parent], this->A[index]);
     }
 
     // recursion of the function
-    heapify_enqueue(index - 1);
+    this->heapify_enqueue(index - 1);
   }
 
   void heapify_dequeue(const size_t &index) { // used in heapify dequeue.
     size_t max = index;                       // max index
-    if (index == A.size() - 1 || A.size() == 0)
-      return;
     // left child index
-    const T &left = A[index];
+    const size_t left_i = index * 2 + 1;
     // right child index
-    const T &right = A[index + 1];
-    // compare and find the greatest child, and the greast child index become
-    // max
-    if (left > right) {
-      max++;
+    const size_t right_i = index * 2 + 2;
+    // compare and find the greatest child
+    if (left_i < this->A.size() && this->A[left_i] > this->A[index]) {
+      max = left_i;
+    }
+
+    if (right_i < this->A.size() && this->A[right_i] > this->A[index]) {
+      max = right_i;
+    }
+
+    if (left_i < this->A.size() && right_i < this->A.size()) {
+      if (this->A[left_i] > this->A[right_i]) {
+        max = left_i;
+      } else {
+        max = right_i;
+      }
     }
 
     if (max != index) {
-      std::swap(A[index], A[max]);
-      heapify_dequeue(max); // recursion
+      std::swap(this->A[index], this->A[max]);
+      this->heapify_dequeue(max); // recursion
     }
   }
 
 public:
+  void init(const std::vector<T> &ary) {
+    this->A = ary;
+    for (size_t i = (A.size() - 1) / 2; i > 0; i--)
+      this->heapify_dequeue(i);
+    this->heapify_dequeue(0);
+  }
+
   void enqueue(T element) {
-    A.push_back(element);
-    heapify_enqueue(A.size() - 1); // start at last element.
+    this->A.push_back(element);
+    this->heapify_enqueue(A.size() - 1); // start at last element.
   }
 
   T dequeue() {
     T removed_element = A[0];
-    A[0] = A[A.size() - 1]; // copy last element to root.
-    A.pop_back();           // remove last element.
-    heapify_dequeue(0);     // start at root.
+    this->A[0] = this->A[this->A.size() - 1]; // copy last element to root.
+    this->A.pop_back();                       // remove last element.
+    this->heapify_dequeue(0);                 // start at root.
     return removed_element;
   }
 
-  size_t size() const { return A.size(); }
+  size_t size() const { return this->A.size(); }
 
   void print() const {
-    for (size_t i = 0; i < A.size(); i++)
-      std::print("{} ", A[i]);
+    for (size_t i = 0; i < this->A.size(); i++)
+      std::print("{} ", this->A[i]);
     std::println();
   }
 };
@@ -77,6 +93,12 @@ int main() {
   constexpr size_t n = std::size(A);
   std::print("Array = ");
   printArray(A, n);
+
+  std::println("\nINIT Enqueue\t: PriorityQueue");
+  const std::vector<int> B = {4, 2, 5, 8, 6, 9, 3, 7};
+  PriorityQueue<int> pp;
+  pp.init(B);
+  pp.print();
 
   std::println("\nEnqueue\t: PriorityQueue");
   PriorityQueue<int> pq;
